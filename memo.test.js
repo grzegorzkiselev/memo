@@ -1,5 +1,5 @@
 const { memo } = require("./memo.js");
-const hash = require('object-hash');
+const hash = require("object-hash");
 
 it("Мемоизирует", () => {
   const sumInts = memo((a, b) => a + b);
