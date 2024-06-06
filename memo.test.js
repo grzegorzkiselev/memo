@@ -1,4 +1,5 @@
 const { memo } = require("./memo.js");
+const hash = require('object-hash');
 
 it("Мемоизирует", () => {
   const sumInts = memo((a, b) => a + b);
@@ -8,8 +9,8 @@ it("Мемоизирует", () => {
 });
 
 it("Работает с Фэлси", () => {
-  const sumInts = memo((a, b) => a + b);                        9
-
+  const sumInts = memo((a, b) => a + b);
+  
   expect(sumInts(0, 0)).toBe(0);
   expect(sumInts(0, 0)).toBe("MEMOIZED_0");
 });
@@ -62,17 +63,53 @@ it("Работает со вложенными объектами", () => {
   expect(sumInts(secondObject)).toBe("MEMOIZED_35")
 });
 
-it("Работает с циклическими объектами", () => {
+it("Работает с копиями объектов", () => {
   const sumInts = memo((object) => {
-    return object.a + object.b.a;
+    return object.a + object.b;
   });
 
-  const upperObject = { a: Infinity };
+  const upperObject = { a: 30, b: 5 };
+  const secondObject = { ...upperObject };
+
+  expect(sumInts(upperObject)).toBe(35);
+  expect(sumInts(secondObject)).toBe("MEMOIZED_35")
+});
+
+it("Работает с циклическими объектами", () => {
+    const sumInts = memo((object) => {
+      return object.a + object.b.a;
+    },
+    hash
+  );
+
+  const upperObject = { a: 0 };
   upperObject.b = upperObject;
   upperObject.b.a = 5;
 
+  expect(sumInts(upperObject)).toBe(10);
+  expect(sumInts(upperObject)).toBe("MEMOIZED_10")
+});
+
+it("Работает с пользовательскими генераторами ключа", () => {
+  const sumIntsObject = memo(
+    (object) => {
+      return object.a + object.b.a;
+    },
+    hash
+  );
+
+  const sumInts = memo(
+    (a, b) => a + b,
+    hash
+  );
+
+  const upperObject = { a: 30 };
+  upperObject.b = { ...upperObject };
+  upperObject.b.a = 5;
   const secondObject = {...upperObject}
 
-  expect(sumInts(upperObject)).toBe(10);
-  expect(sumInts(secondObject)).toBe("MEMOIZED_10")
+  expect(sumIntsObject(upperObject)).toBe(35);
+  expect(sumIntsObject(secondObject)).toBe("MEMOIZED_35");
+  expect(sumInts(30, 5)).toBe(35);
+  expect(sumInts(30, 5)).toBe("MEMOIZED_35");
 });

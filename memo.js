@@ -1,24 +1,28 @@
-const memo = (callback) => {
-    const cache = new Map();
+const memo = (callback, hashGenerator) => {
+  const cache = new Map();
 
-    return (...args) => {
-        try {
-          const joinedArgs = JSON.stringify(args);
+  return (...args) => {
+      try {
+        const argumentsKey = hashGenerator && typeof hashGenerator === "function"
+          ? hashGenerator.apply(null, args) 
+          : JSON.stringify(args);
+        
+          console.log(argumentsKey);
 
-          if (cache.has(joinedArgs)) {
-            return "MEMOIZED_" + cache.get(joinedArgs);
-          }
-
-          const result = callback(...args);
-          cache.set(joinedArgs, result);
-
-          return result;
-        } catch (error) {
-          console.error(
-            `Getting error while accessing cache with ${args}`
-          )
+        if (cache.has(argumentsKey)) {
+          return "MEMOIZED_" + cache.get(argumentsKey);
         }
-    }
+
+        const result = callback.apply(null, args);
+        cache.set(argumentsKey, result);
+
+        return result;
+      } catch (error) {
+        console.error(
+          `Getting error while accessing cache with ${args}`
+        )
+      }
+  }
 }
 
 module.exports = { memo };
