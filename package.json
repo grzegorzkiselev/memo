@@ -11,5 +11,8 @@
   "description": "",
   "dependencies": {
     "object-hash": "^3.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
   }
 }
