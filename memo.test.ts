@@ -2,17 +2,18 @@ import { expect, it } from "vitest";
 import { memo } from "./memo.ts";
 import hash from "object-hash";
 
-const numbersCallback = (a, b) => (a as number) + (b as number);
-const objectCallback = ({ a, b }) => (a as number) + (b as number);
-type RecursiveObject = Record<string, number | RecursiveObject>;
+const numbersCallback = (int1: number, int2: number) => int1 + int2;
+interface RecursiveObject {
+  [key: string]: number | RecursiveObject;
+}
 const invalidHashGenerator = () => null
 
-it("Мемоизирует", () => {
+it("Мемоизирует", () => { 
   const sumInts = memo(numbersCallback);
 
   expect(sumInts(30, 10)).toBe(40);
   expect(sumInts(30, 10)).toBe("MEMOIZED_40");
-});
+  });
 
 it("Работает с Фэлси", () => {
   const sumInts = memo(numbersCallback);
@@ -38,15 +39,15 @@ it("Не создаёт коллизий", () => {
 });
 
 it("Работает с объектами", () => {
-  const sumInts = memo(objectCallback);
+  const sumInts = memo(({ a, b }: { a: number, b: number }) => a + b);
 
   expect(sumInts({ a: 30, b: 5 })).toBe(35);
   expect(sumInts({ a: 30, b: 5 })).toBe("MEMOIZED_35")
 });
 
 it("Работает с наборами", () => {
-  const sumInts = memo((set) => {
-    const valuesIter = (set as Set<number>).values();
+  const sumInts = memo((set: Set<number>): number => {
+    const valuesIter = set.values();
     return valuesIter.next().value + valuesIter.next().value;
   });
 
@@ -55,8 +56,8 @@ it("Работает с наборами", () => {
 });
 
 it("Работает со вложенными объектами", () => {
-  const sumInts = memo((object) => {
-    return (object as RecursiveObject).a  + (object as RecursiveObject).b.a;
+  const sumInts = memo((object: RecursiveObject) => {
+    return object.a + object.b[(typeof object.b !== "number" && "a") as string];
   });
 
   const upperObject: RecursiveObject = { a: 30 };
@@ -70,8 +71,8 @@ it("Работает со вложенными объектами", () => {
 });
 
 it("Работает с копиями объектов", () => {
-  const sumInts = memo((object) => {
-    return (object as Record<string, number>).a + (object as Record<string, number>).b;
+  const sumInts = memo((object: Record<string, number>) => {
+    return object.a + object.b;
   });
 
   const upperObject = { a: 30, b: 5 };
@@ -82,8 +83,8 @@ it("Работает с копиями объектов", () => {
 });
 
 it("Работает с циклическими объектами", () => {
-  const sumInts = memo((object) => {
-    return (object as RecursiveObject).a + (object as RecursiveObject).b.a;
+  const sumInts = memo((object: RecursiveObject) => {
+    return object.a + object.b[(typeof object.b !== "number" && "a") as string];
   },
     hash
   );
@@ -98,8 +99,8 @@ it("Работает с циклическими объектами", () => {
 
 it("Работает с пользовательскими генераторами ключа", () => {
   const sumIntsObject = memo(
-    (object) => {
-      return (object as RecursiveObject).a + (object as RecursiveObject).b.a;
+    (object: RecursiveObject): number => {
+      return object.a + object.b[(typeof object.b !== "number" && "a") as string];
     },
     hash
   );
